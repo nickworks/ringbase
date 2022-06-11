@@ -427,5 +427,39 @@ public static class MeshTools
         mesh.SetTriangles(tris, 0);
         return mesh;
     }
+    public static Mesh FromTris(List<Triangle> tris){
 
+        List<Vector3> vertexList = new List<Vector3>();
+        List<int> triangleList = new List<int>();
+        List<Vector3> normals = new List<Vector3>();
+        //List<FProcMeshTangent> tangents;
+        List<Vector2> uvs = new List<Vector2>();
+        List<Vector3> colors = new List<Vector3>();
+
+        for (int i = 0; i < tris.Count; i++) {
+            triangleList.Add(vertexList.Count);
+            vertexList.Add(tris[i].a);
+            triangleList.Add(vertexList.Count);
+            vertexList.Add(tris[i].b);
+            triangleList.Add(vertexList.Count);
+            vertexList.Add(tris[i].c);
+            
+            Vector3 n = tris[i].CalcNormal();
+            normals.Add(n);
+            normals.Add(n);
+            normals.Add(n);
+        }
+
+        //normals.SetNum(vertexList.Num());
+        //tangents.SetNum(vertexList.Num());
+
+        // submit mesh data to component:
+        
+        Mesh mesh = new Mesh();
+        mesh.vertices = vertexList.ToArray();
+        mesh.triangles = triangleList.ToArray();
+        mesh.normals = normals.ToArray();
+        mesh.uv = uvs.ToArray();
+        return mesh;
+    }
 }

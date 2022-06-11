@@ -70,7 +70,11 @@ public class PlayerMovement : MonoBehaviour
             {
                 Vector3 rot = script.GetLookInput();
 
-                script.transform.localRotation *= Quaternion.Euler(rot);
+                script.transform.localRotation = script.transform.localRotation
+                    * Quaternion.Euler(0, 0, rot.z)
+                    * Quaternion.Euler(rot.x, 0, 0)
+                    * Quaternion.Euler(0, rot.y, 0)
+                    ;
                 script.cam.transform.localEulerAngles = new Vector3(0, 0, 0);
             }
             public override void UpdateVelocity()

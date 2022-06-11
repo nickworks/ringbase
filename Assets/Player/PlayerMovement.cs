@@ -9,20 +9,84 @@ public class PlayerMovement : MonoBehaviour
     public float walkSpeed = 5f;
     public float jetpackSpeed = 15f;
     public float jumpImpulse = 10f;
-    public Vector2 lookSensitivity = new Vector2(2, -2);
+    public Vector3 lookSensitivity = new Vector3(5, -5, .5f);
     private float yaw = 0;
     private float pitch = 0;
     private float roll = 0;
     private Rigidbody body;
     private Camera cam;
 
-    bool gravityIsOn = false;
-    bool playerIsGrounded = false;
-    Vector3 gravityDirection = Vector3.right;
-    float gravityAmount = 10;
+    public bool gravityIsOn = false;
+    public bool playerIsGrounded = false;
+    public Vector3 gravityDirection = Vector3.down;
+    public float gravityAmount = 10;
     Vector3 lastPosition = Vector3.zero;
+    Vector3 groundNormal = Vector3.up;
 
     Vector3 velocity = Vector3.zero;
+
+    public class States {
+        public abstract class State {
+            protected PlayerMovement script = null;
+            public abstract void Look();
+            public abstract void UpdateVelocity();
+            public virtual void OnBegin(PlayerMovement script){
+                this.script = script;
+            }
+            public virtual void OnEnd() {}
+        }
+        public class Gravity : State {
+            public override void Look()
+            {
+                Vector3 rot = script.GetLookInput();
+
+                script.yaw += rot.y;
+                script.pitch += rot.x;
+
+                script.transform.rotation = Quaternion.FromToRotation(Vector3.down, script.gravityDirection) * Quaternion.Euler(0, script.yaw, 0);
+                script.cam.transform.localEulerAngles = new Vector3(script.pitch, 0, 0);
+            }
+            public override void UpdateVelocity()
+            {
+
+                Vector3 input = script.GetMoveInput();
+                if (input.sqrMagnitude > 1) input.Normalize();
+
+                // gravity:
+                script.ApplyGravity();
+                
+                bool jump = Input.GetButtonDown("Jump");
+                if(script.playerIsGrounded){
+                    if(jump){
+                        script.Jump();
+                        return;
+                    }
+                    script.SetVelocity(input * script.walkSpeed);
+                }
+            }
+        }
+        public class ZeroG : State {
+            public override void Look()
+            {
+                Vector3 rot = script.GetLookInput();
+
+                script.transform.localRotation *= Quaternion.Euler(rot);
+                script.cam.transform.localEulerAngles = new Vector3(0, 0, 0);
+            }
+            public override void UpdateVelocity()
+            {
+                Vector3 desiredVelocity = script.GetMoveInput() * script.jetpackSpeed;
+                //if (input.sqrMagnitude > 1) input.Normalize();
+                
+                if(script.playerIsGrounded){
+                    print("zero G but on the ground");
+                }
+                
+                script.SetVelocity(desiredVelocity);
+            }
+        }
+    }
+    private States.State state;
 
     void Start()
     {
@@ -35,86 +99,50 @@ public class PlayerMovement : MonoBehaviour
     {
 
         //CalcVelocity();
-
-        if(gravityIsOn){
-            DoLookGravity();
-            DoMoveGravity();
-        } else {
-            DoLookZeroG();
-            DoMoveZeroG();
-        }
+        if(state == null) SwitchState(new States.ZeroG());
+        state.Look();
+        state.UpdateVelocity();
 
         if(Input.GetButtonDown("Gravity")) {
             gravityIsOn = !gravityIsOn;
             print($"gravity {(gravityIsOn?"on":"off")}");
+            SwitchState(gravityIsOn ? new States.Gravity() : new States.ZeroG());
         }
     }
     void FixedUpdate(){
         playerIsGrounded = false;
     }
-
-    private void DoLookGravity()
-    {
-        float mx = Input.GetAxisRaw("Mouse X");
-        float my = Input.GetAxisRaw("Mouse Y");
-
-        yaw += mx * lookSensitivity.x;
-        pitch += my * lookSensitivity.y;
-
-        transform.rotation = Quaternion.FromToRotation(Vector3.down, gravityDirection) * Quaternion.Euler(0, yaw, 0);
-        cam.transform.localEulerAngles = new Vector3(pitch, 0, 0);
+    private void SwitchState(States.State state){
+        if(state == null) return;
+        if(this.state != null) this.state.OnEnd();
+        this.state = state;
+        this.state.OnBegin(this);
     }
-    private void DoLookZeroG()
-    {
-        float mx = Input.GetAxisRaw("Mouse X");
-        float my = Input.GetAxisRaw("Mouse Y");
-        float lookRoll = Input.GetAxisRaw("LookRoll");
-
-
-        float ry = mx * lookSensitivity.x;
-        float rx = my * lookSensitivity.y;
-        float rz = lookRoll;
-
-        transform.localRotation *= Quaternion.Euler(rx,ry,rz);
-        cam.transform.localEulerAngles = new Vector3(0, 0, 0);
+    private void SetVelocity(Vector3 desiredVelocity){
+        body.velocity = Vector3.MoveTowards(body.velocity, desiredVelocity, 10 * Time.deltaTime);
     }
-
-
-    private void DoMoveGravity()
-    {
-        float z = Input.GetAxisRaw("MoveForward");
-        float x = Input.GetAxisRaw("MoveRight");
-
-        bool jump = Input.GetButtonDown("Jump");
-
-        Vector3 input = transform.forward * z + transform.right * x;
-        if (input.sqrMagnitude > 1) input.Normalize();
-
-        if(!playerIsGrounded){
-            body.velocity += gravityDirection * gravityAmount * Time.deltaTime;
-        } else {
-            body.velocity += input * walkSpeed * Time.deltaTime;
-            if(jump){
-                body.velocity += 5 * -gravityDirection;
-                playerIsGrounded = false;
-            }
-        }
+    private void AddVelocity(Vector3 desiredVelocity){
+        body.velocity += desiredVelocity;
     }
-    private void DoMoveZeroG(){
-
-
+    private void Jump(){
+        body.velocity += jumpImpulse * -gravityDirection;
+        playerIsGrounded = false;
+    }
+    private Vector3 GetLookInput(){
+        float y = Input.GetAxisRaw("Mouse X") * lookSensitivity.x;
+        float x = Input.GetAxisRaw("Mouse Y") * lookSensitivity.y;
+        float z = Input.GetAxisRaw("LookRoll") * lookSensitivity.z;
+        return new Vector3(x, y, z);
+    }
+    private Vector3 GetMoveInput(bool allDirections = true){
         float z = Input.GetAxisRaw("MoveForward");
         float x = Input.GetAxisRaw("MoveRight");
         float y = Input.GetAxisRaw("MoveUp");
-        
-        Vector3 input = cam.transform.forward * z + cam.transform.right * x + cam.transform.up * y;
-        //if (input.sqrMagnitude > 1) input.Normalize();
-        
-        if(playerIsGrounded){
-            print("zero G but on the ground");
-        }
-
-        body.velocity += input * jetpackSpeed * Time.deltaTime;
+        if(!allDirections) return transform.forward * z + transform.right * x;
+        return cam.transform.forward * z + cam.transform.right * x + cam.transform.up * y;
+    }
+    private void ApplyGravity(){
+        body.velocity += gravityDirection * gravityAmount * Time.deltaTime;
     }
     void OnControllerColliderHit(ControllerColliderHit hit){
         CalcVelocity();
@@ -122,8 +150,11 @@ public class PlayerMovement : MonoBehaviour
     void CalcVelocity(){
         Vector3 v = (transform.position - lastPosition)/Time.deltaTime;
         lastPosition = transform.position;
-        if(v.sqrMagnitude < velocity.sqrMagnitude) velocity = v;
+        if(v.sqrMagnitude < velocity.sqrMagnitude)  velocity = v;
     }
+    Vector3 ProjectAlongGroundPlane (Vector3 v) {
+		return v - groundNormal * Vector3.Dot(v, groundNormal);
+	}
     void OnCollisionEnter (Collision collision) {
 		EvaluateCollision(collision);
 	}
@@ -132,9 +163,14 @@ public class PlayerMovement : MonoBehaviour
 		EvaluateCollision(collision);
 	}
     void EvaluateCollision (Collision collision) {
+
 		for (int i = 0; i < collision.contactCount; i++) {
 			Vector3 normal = collision.GetContact(i).normal;
-            playerIsGrounded |= Vector3.Dot(normal, gravityDirection) <= -.9f;
+            
+            if(Vector3.Dot(normal, gravityDirection) <= -.9f){
+                playerIsGrounded = true;
+                groundNormal = normal;
+            }
 		}
 	}
 }

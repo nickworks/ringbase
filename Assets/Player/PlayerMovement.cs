@@ -97,6 +97,7 @@ public class PlayerMovement : MonoBehaviour
         body = GetComponent<Rigidbody>();
         cam = GetComponentInChildren<Camera>();
         lastPosition = transform.position;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
@@ -127,6 +128,10 @@ public class PlayerMovement : MonoBehaviour
         gravityDirection = dir;
         gravityIsOn = true;
         SwitchState(new States.Gravity());
+    }
+    public void GravityOff(){
+        gravityIsOn = false;
+        SwitchState(new States.ZeroG());
     }
     private void SetVelocity(Vector3 desiredVelocity){
         body.velocity = Vector3.MoveTowards(body.velocity, desiredVelocity, 10 * Time.deltaTime);

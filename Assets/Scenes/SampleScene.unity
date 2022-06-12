@@ -725,7 +725,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 5
   jetpackSpeed: 15
-  jumpImpulse: 6
+  jumpImpulse: 3
   lookSensitivity: {x: 5, y: -5, z: 0.5}
   gravityIsOn: 0
   playerIsGrounded: 0
@@ -1022,15 +1022,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5256242296784277985, guid: fa9f236a3b8c940c8b66b9151cd53416, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 15.1
+      value: 14.57
       objectReference: {fileID: 0}
     - target: {fileID: 5256242296784277985, guid: fa9f236a3b8c940c8b66b9151cd53416, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 13.5
+      value: 13.23
       objectReference: {fileID: 0}
     - target: {fileID: 5256242296784277985, guid: fa9f236a3b8c940c8b66b9151cd53416, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 40.6
+      value: 39.77
       objectReference: {fileID: 0}
     - target: {fileID: 5256242296784277985, guid: fa9f236a3b8c940c8b66b9151cd53416, type: 3}
       propertyPath: m_LocalRotation.w

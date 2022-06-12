@@ -89,9 +89,7 @@ public class WorldSeed : MonoBehaviour
     }
     Dictionary<Index3D,ProceduralTerrain> chunks = new Dictionary<Index3D, ProceduralTerrain>();
 
-    List<ProceduralTerrain> buildQueue = new List<ProceduralTerrain>();
-
-    CancellationTokenSource cancellationTokenSource;
+    BuildQueue queue = new BuildQueue();
 
     void Start(){
         if(singleton){
@@ -99,43 +97,64 @@ public class WorldSeed : MonoBehaviour
             return;
         }
         singleton = this;
-        _previousPlayerPosition = Index3D.From(player ? player.transform.position : Vector3.zero);
-        BeginQueue();   
+        _previousPlayerPosition = Index3D.From(player ? player.transform.position : Vector3.zero);   
     }
-    private void BeginQueue(){
-        StopQueue();
-        cancellationTokenSource = new CancellationTokenSource();
-        Task t = ProcessQueue(cancellationTokenSource.Token);
-    }
-    private void StopQueue(){
-        if(cancellationTokenSource != null) cancellationTokenSource.Cancel();
-    }
-    async Task ProcessQueue(CancellationToken cancellationToken){
-        while(true){
-            if (buildQueue.Count > 1){
-                Task t = buildQueue[0].MarchGeometryAsync();
-                buildQueue.RemoveAt(0);
+    class BuildQueue {
+        List<ProceduralTerrain> queue = new List<ProceduralTerrain>();
+        public BuildQueue(){
+
+        }
+        public void Add(ProceduralTerrain chunk){
+            queue.Add(chunk);
+        }
+        CancellationTokenSource cancellationTokenSource;
+        public void BeginQueue(){
+            if(cancellationTokenSource == null) {
+                cancellationTokenSource = new CancellationTokenSource();
+                Task t = ProcessQueue(cancellationTokenSource.Token);
             }
-            await Task.Delay(10);
-            if (cancellationToken.IsCancellationRequested) break;
+        }
+        public void StopQueue(){
+            if(cancellationTokenSource != null) cancellationTokenSource.Cancel();
+            cancellationTokenSource = null;
+            queue.Clear();
+        }
+        private async Task ProcessQueue(CancellationToken cancellationToken){
+            while(true){
+                if (queue.Count > 1){
+                    Task t = queue[0].MarchGeometryAsync();
+                    queue.RemoveAt(0);
+                }
+                await Task.Delay(10);
+                if (cancellationToken.IsCancellationRequested) break;
+            }
         }
     }
     void OnDestroy(){
-        StopQueue();
+        queue.StopQueue();
+        queue = null;
         if(singleton == this){
             singleton = null;
         }
     }
     void Update(){
-        if(player){
-            Index3D p = Index3D.From(player.transform.position);
-            if(p != _previousPlayerPosition){
-                LoadRegion(p);
-            }
-            _previousPlayerPosition = p;
-        }
+        LoadRegionsAroundPlayer();
     }
-    public void LoadRegion(Index3D p){
+    public void LoadRegionsAroundPlayer(bool ignorePreviousPosition = false){
+
+        if(player == null) return;
+
+        // get player position:
+        Index3D p = Index3D.From(player.transform.position);
+
+        // if in same spot as last frame, do nothing
+        if(p == _previousPlayerPosition && ignorePreviousPosition == false) return;
+
+        _previousPlayerPosition = p;
+
+        // begin queue if it's not already running
+        queue.BeginQueue();
+
         int d = viewDistance;
         for(int x = -d; x <= d; x++){
             for(int y = -d; y <= d; y++){
@@ -158,10 +177,27 @@ public class WorldSeed : MonoBehaviour
         //print("launching chunk...");
         ProceduralTerrain chunk = Instantiate(prefabChunk, p.position, Quaternion.identity);
         chunks.Add(p, chunk);
-        buildQueue.Add(chunk);
+        queue.Add(chunk);
     }
     public void BuildWorld(){
+        if(!Application.isPlaying) return;
         singleton = this;
+        ClearWorld();
+        LoadRegionsAroundPlayer(true);
+    }
+    public void ClearWorld(){
+        
+        if(!Application.isPlaying) return;
+
+        // stop and empty the queue
+        queue.StopQueue();
+
+        // destroy existing chunks:
+        foreach(KeyValuePair<Index3D, ProceduralTerrain> kp in chunks){
+            if(kp.Value == null) continue;
+            Destroy(kp.Value.gameObject);
+        }
+        chunks.Clear();
     }
     public async Task<float[,,]> GetDensityField(Vector3 worldLocation){
 
@@ -295,8 +331,10 @@ public class WorldSeedEditor : Editor {
     override public void OnInspectorGUI(){
         base.OnInspectorGUI();
 
-        if(GUILayout.Button("Build")){
-            (target as WorldSeed).BuildWorld();
-        }
+        WorldSeed seed = (target as WorldSeed);
+
+        if(GUILayout.Button("Build")) seed.BuildWorld();
+        if(GUILayout.Button("Clear")) seed.ClearWorld();
+        
     }
 }

@@ -122,6 +122,12 @@ public class PlayerMovement : MonoBehaviour
         this.state = state;
         this.state.OnBegin(this);
     }
+    public void GravityOn(Vector3 dir){
+        gravityAmount = 1;
+        gravityDirection = dir;
+        gravityIsOn = true;
+        SwitchState(new States.Gravity());
+    }
     private void SetVelocity(Vector3 desiredVelocity){
         body.velocity = Vector3.MoveTowards(body.velocity, desiredVelocity, 10 * Time.deltaTime);
     }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class WorldSeed : MonoBehaviour
 {
@@ -15,6 +17,9 @@ public class WorldSeed : MonoBehaviour
 
     [Range(1,50)]
     public int terrainSize = 12;
+
+    [Range(0,5)]
+    public int viewDistance = 1;
 
     public List<SignalField> TheSignalFields;
 
@@ -68,7 +73,6 @@ public class WorldSeed : MonoBehaviour
         }
         public override bool Equals(object obj)
         {
-
             return (obj is Index3D p && p == this);
         }
         public override int GetHashCode()
@@ -85,6 +89,10 @@ public class WorldSeed : MonoBehaviour
     }
     Dictionary<Index3D,ProceduralTerrain> chunks = new Dictionary<Index3D, ProceduralTerrain>();
 
+    List<ProceduralTerrain> buildQueue = new List<ProceduralTerrain>();
+
+    CancellationTokenSource cancellationTokenSource;
+
     void Start(){
         if(singleton){
             Destroy(gameObject);
@@ -92,8 +100,28 @@ public class WorldSeed : MonoBehaviour
         }
         singleton = this;
         _previousPlayerPosition = Index3D.From(player ? player.transform.position : Vector3.zero);
+        BeginQueue();   
+    }
+    private void BeginQueue(){
+        StopQueue();
+        cancellationTokenSource = new CancellationTokenSource();
+        Task t = ProcessQueue(cancellationTokenSource.Token);
+    }
+    private void StopQueue(){
+        if(cancellationTokenSource != null) cancellationTokenSource.Cancel();
+    }
+    async Task ProcessQueue(CancellationToken cancellationToken){
+        while(true){
+            if (buildQueue.Count > 1){
+                Task t = buildQueue[0].MarchGeometryAsync();
+                buildQueue.RemoveAt(0);
+            }
+            await Task.Delay(10);
+            if (cancellationToken.IsCancellationRequested) break;
+        }
     }
     void OnDestroy(){
+        StopQueue();
         if(singleton == this){
             singleton = null;
         }
@@ -108,7 +136,7 @@ public class WorldSeed : MonoBehaviour
         }
     }
     public void LoadRegion(Index3D p){
-        int d = 1;
+        int d = viewDistance;
         for(int x = -d; x <= d; x++){
             for(int y = -d; y <= d; y++){
                 for(int z = -d; z <= d; z++){
@@ -130,9 +158,38 @@ public class WorldSeed : MonoBehaviour
         //print("launching chunk...");
         ProceduralTerrain chunk = Instantiate(prefabChunk, p.position, Quaternion.identity);
         chunks.Add(p, chunk);
+        buildQueue.Add(chunk);
     }
     public void BuildWorld(){
         singleton = this;
+    }
+    public async Task<float[,,]> GetDensityField(Vector3 worldLocation){
+
+        int res = terrainSize + 1; // number of densities needed = voxels + 1
+        float[,,] densities = new float[res, res, res];
+
+        int steps = 10;
+        int chunks_per_frame = res / steps;
+
+        for (int x = 0; x < res; x++)
+        {
+            for (int y = 0; y < res; y++)
+            {
+                for (int z = 0; z < res; z++)
+                {
+                    // local location:
+                    Vector3 locloc = new Vector3(x, y, z) * voxelSize;
+
+                    // world location:
+                    Vector3 seed = worldLocation + locloc;
+
+                    // get density:
+                    densities[x,y,z] = GetDensitySample(seed);
+                }
+            }
+            if(x % chunks_per_frame == 0) await Task.Yield();
+        }
+        return densities;
     }
     public float GetDensitySample(Vector3 pos){
         float res = 0;

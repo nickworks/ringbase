@@ -83,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
                 //if (input.sqrMagnitude > 1) input.Normalize();
                 
                 if(script.playerIsGrounded){
-                    print("zero G but on the ground");
+                    //print("zero G but on the ground");
                 }
                 
                 script.SetVelocity(desiredVelocity);

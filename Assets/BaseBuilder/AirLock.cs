@@ -6,7 +6,9 @@ public class AirLock : MonoBehaviour, IPlayerInteractable
 {
     public RectRoom room;
 
-    public void Interact(PlayerMovement player){
+    public void Interact(PlayerInteract player){
+
+        PlayerMovement pMove = player.GetComponent<PlayerMovement>();
 
         Vector3 vToPlayer = player.transform.position - transform.position;
         float alignment = Vector3.Dot(vToPlayer, transform.forward);
@@ -14,11 +16,11 @@ public class AirLock : MonoBehaviour, IPlayerInteractable
         bool goingInside = (alignment > 0);
 
         if(goingInside){
-            player.GravityOn(-room.transform.up);
-            player.transform.position = transform.position - transform.forward;
+            pMove.GravityOn(-room.transform.up);
+            pMove.transform.position = transform.position - transform.forward;
         } else {
-            player.GravityOff();
-            player.transform.position = transform.position + transform.forward;
+            pMove.GravityOff();
+            pMove.transform.position = transform.position + transform.forward;
         }
     }
 }

@@ -11,29 +11,6 @@ public class RectRoom : Structure
     [Range(1,5)]
     public int z;
 
-    public RectRoomPreview previewPrefab;
-
-    public RectRoomPreview MakePreview(Transform parent, BuilderNode.BuildDirection buildDirection){
-        RectRoomPreview preview = Instantiate(previewPrefab, parent);
-
-        Vector3 localOffset = Vector3.zero;
-        if(buildDirection == BuilderNode.BuildDirection.Vertical){
-            localOffset = -startNodeVertical.transform.localPosition;
-        }
-        if(buildDirection == BuilderNode.BuildDirection.Lateral){
-            localOffset = -startNodeLateral.transform.localPosition;
-        }
-
-        preview.transform.localPosition += localOffset;
-        preview.transform.localScale = new Vector3(
-            x * size.x,
-            y * size.y,
-            z * size.z
-        );
-        
-        return preview;
-    }
-
     Vector3 size = new Vector3(10, 5, 10);
 
     public Transform wallLeft;
@@ -85,5 +62,15 @@ public class RectRoom : Structure
 
          wallBack.localScale = new Vector3(sizeX, sizeY, wallThicc);
         wallFront.localScale = wallBack.localScale;
+    }
+    public override PreviewStructure MakePreview(Transform parent, BuilderNode.BuildDirection buildDirection)
+    {
+        PreviewStructure preview = base.MakePreview(parent, buildDirection);
+        preview.transform.localScale = new Vector3(
+            x * size.x,
+            y * size.y,
+            z * size.z
+        );
+        return preview;
     }
 }

@@ -55,10 +55,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startNodeVertical: {fileID: 5650458651131267813}
   startNodeLateral: {fileID: 443588944245982761}
+  previewPrefab: {fileID: 1128328812735335127, guid: 383daf43132b84e0f8c70fe2145162c4, type: 3}
   x: 1
   y: 1
   z: 1
-  previewPrefab: {fileID: 2954747719506362487, guid: 383daf43132b84e0f8c70fe2145162c4, type: 3}
   wallLeft: {fileID: 5256242296894099640}
   wallRight: {fileID: 5256242297085715636}
   wallFront: {fileID: 5256242297478759214}
@@ -800,7 +800,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: -0.027448788
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalRotation.x
@@ -808,7 +808,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.99962324
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalRotation.z
@@ -820,7 +820,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 183.146
       objectReference: {fileID: 0}
     - target: {fileID: 7848793208517977160, guid: e22ea29e930544d349e4d32d6d0611b2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z

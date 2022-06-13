@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class BuilderNode : MonoBehaviour, IPlayerInteractable
 {
-    public RectRoom prefabRoom;
-    private RectRoomPreview preview = null;
-    private RectRoom structure1 = null;
-    private RectRoom structure2 = null;
+    private Structure selectedStructure = null;
+    private PreviewStructure preview = null;
+    private Structure structure1 = null;
+    private Structure structure2 = null;
 
     public enum BuildDirection {
         Vertical,
@@ -121,7 +121,7 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
     }
 
     States.State state;
-    PlayerMovement player;
+    PlayerInteract player;
     public BuildDirection buildDirection = BuildDirection.Vertical;
     Quaternion startingRotation;
 
@@ -135,7 +135,7 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
         state = nextState;
         state.OnBegin(this);
     }
-    public void Interact(PlayerMovement player)
+    public void Interact(PlayerInteract player)
     {
         this.player = player;
         if(state != null) SwitchState(state.Interact());
@@ -152,14 +152,14 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
 
     private void PickStructure(){
 
-        // TODO: show gui
-        // pick a prefab to build?
-        // or maybe a class?
-
-        // if no cancel, then:
-        SetPreview(prefabRoom);
+        // tell player to launch picker GUI:
+        if(player) player.PickStructure(this);
     }
-    private void SetPreview<T>(T prefab) where T : RectRoom {
+    public void PickStructure(Structure structure){
+        selectedStructure = structure;
+        SetPreview(selectedStructure);
+    }
+    private void SetPreview<T>(T prefab) where T : Structure {
 
         if(prefab == null) return;
         if(preview != null) Destroy(preview.gameObject);
@@ -182,7 +182,8 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
             targetRot = Quaternion.FromToRotation(Vector3.up, dir_to_pos);
         }
         if(buildDirection == BuildDirection.Lateral){    
-            targetRot = Quaternion.LookRotation(dir_to_pos, transform.up);
+            //targetRot = Quaternion.LookRotation(dir_to_pos, transform.up);
+            targetRot = Quaternion.FromToRotation(Vector3.forward, dir_to_pos);
         }
         // limit rotation
         Quaternion finalRot = Quaternion.RotateTowards(startingRotation, targetRot, 20);
@@ -192,6 +193,6 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
         if(preview == null) return; // no preview to clone...
         if(structure2 != null) return; // slot already has a structure!
 
-        structure2 = Instantiate(prefabRoom, preview.transform.position, preview.transform.rotation);
+        structure2 = Instantiate(selectedStructure, preview.transform.position, preview.transform.rotation);
     }
 }

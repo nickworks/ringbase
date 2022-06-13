@@ -25,6 +25,8 @@ public class PlayerMovement : MonoBehaviour
 
     Vector3 velocity = Vector3.zero;
 
+    public bool shouldIgnoreInput = false;
+
     public class States {
         public abstract class State {
             protected PlayerMovement script = null;
@@ -55,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
                 // gravity:
                 script.ApplyGravity();
                 
-                bool jump = Input.GetButtonDown("Jump");
+                bool jump = !script.shouldIgnoreInput && Input.GetButtonDown("Jump");
                 if(script.playerIsGrounded){
                     if(jump){
                         script.Jump();
@@ -108,7 +110,7 @@ public class PlayerMovement : MonoBehaviour
         state.Look();
         state.UpdateVelocity();
 
-        if(Input.GetButtonDown("Gravity")) {
+        if(!shouldIgnoreInput && Input.GetButtonDown("Gravity")) {
             gravityIsOn = !gravityIsOn;
             print($"gravity {(gravityIsOn?"on":"off")}");
             SwitchState(gravityIsOn ? new States.Gravity() : new States.ZeroG());
@@ -144,12 +146,14 @@ public class PlayerMovement : MonoBehaviour
         playerIsGrounded = false;
     }
     private Vector3 GetLookInput(){
+        if(shouldIgnoreInput) return Vector3.zero;
         float y = Input.GetAxisRaw("Mouse X") * lookSensitivity.x;
         float x = Input.GetAxisRaw("Mouse Y") * lookSensitivity.y;
         float z = Input.GetAxisRaw("LookRoll") * lookSensitivity.z;
         return new Vector3(x, y, z);
     }
     private Vector3 GetMoveInput(bool allDirections = true){
+        if(shouldIgnoreInput) return Vector3.zero;
         float z = Input.GetAxisRaw("MoveForward");
         float x = Input.GetAxisRaw("MoveRight");
         float y = Input.GetAxisRaw("MoveUp");

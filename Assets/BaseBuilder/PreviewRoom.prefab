@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3451668794093801259}
-  - component: {fileID: 2954747719506362487}
+  - component: {fileID: 1128328812735335127}
   m_Layer: 0
-  m_Name: RectRoomPreview
+  m_Name: PreviewRoom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +33,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2954747719506362487
+--- !u!114 &1128328812735335127
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,11 +42,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3451668794093801263}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98553f76ceb8448b0a7c1984cddad843, type: 3}
+  m_Script: {fileID: 11500000, guid: 23a6abb560ed146a3888484cefb3a4cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offsetXform: {fileID: 0}
-  offsetAmount: {x: 0, y: 0, z: 0}
 --- !u!1 &6265722038078365434
 GameObject:
   m_ObjectHideFlags: 0

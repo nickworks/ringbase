@@ -45,6 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23a6abb560ed146a3888484cefb3a4cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  art: {fileID: 8808816000797308761}
+  collidesWith:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &6265722038078365434
 GameObject:
   m_ObjectHideFlags: 0
@@ -58,7 +62,7 @@ GameObject:
   - component: {fileID: 5911802855476437624}
   - component: {fileID: 1789689199002168652}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Art
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

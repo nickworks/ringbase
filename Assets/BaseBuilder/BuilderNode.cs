@@ -69,7 +69,8 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
         }
         class Placing : State {
             override public State Interact(){
-                return new Constructing();
+                if(!node.preview.doesCollide) return new Constructing();
+                return null;
             }
             override public State Cancel(){
                 return new Picking();
@@ -78,8 +79,7 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
             {
                 node.RotatePreview();
                 if(Input.GetButtonDown("Fire1")) {
-                    // TODO: do a collision check...
-                    return new Constructing();
+                    return Interact();
                 }
                 return null;
             }
@@ -188,6 +188,12 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
         // limit rotation
         Quaternion finalRot = Quaternion.RotateTowards(startingRotation, targetRot, 20);
         transform.rotation = finalRot;
+
+        DoCollisionCheck();
+    }
+    private void DoCollisionCheck(){
+        if(preview == null) return;
+        preview.DoCollisionCheck();
     }
     private void BuildStructure(){
         if(preview == null) return; // no preview to clone...

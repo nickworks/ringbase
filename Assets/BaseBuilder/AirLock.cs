@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AirLock : MonoBehaviour
+public class AirLock : MonoBehaviour, IPlayerInteractable
 {
     public RectRoom room;
 
@@ -20,6 +20,5 @@ public class AirLock : MonoBehaviour
             player.GravityOff();
             player.transform.position = transform.position + transform.forward;
         }
-
     }
 }

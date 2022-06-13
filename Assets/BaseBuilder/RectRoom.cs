@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RectRoom : MonoBehaviour
+public class RectRoom : Structure
 {
     [Range(1,5)]
     public int x;
@@ -10,6 +10,29 @@ public class RectRoom : MonoBehaviour
     public int y;
     [Range(1,5)]
     public int z;
+
+    public RectRoomPreview previewPrefab;
+
+    public RectRoomPreview MakePreview(Transform parent, BuilderNode.BuildDirection buildDirection){
+        RectRoomPreview preview = Instantiate(previewPrefab, parent);
+
+        Vector3 localOffset = Vector3.zero;
+        if(buildDirection == BuilderNode.BuildDirection.Vertical){
+            localOffset = -startNodeVertical.transform.localPosition;
+        }
+        if(buildDirection == BuilderNode.BuildDirection.Lateral){
+            localOffset = -startNodeLateral.transform.localPosition;
+        }
+
+        preview.transform.localPosition += localOffset;
+        preview.transform.localScale = new Vector3(
+            x * size.x,
+            y * size.y,
+            z * size.z
+        );
+        
+        return preview;
+    }
 
     Vector3 size = new Vector3(10, 5, 10);
 
@@ -26,16 +49,11 @@ public class RectRoom : MonoBehaviour
     {
         Generate();
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
     void OnValidate(){
         Generate();
     }
     void Generate(){
+
         float wallThicc = .25f;
 
         float sizeX = x * size.x;

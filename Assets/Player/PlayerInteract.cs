@@ -19,11 +19,11 @@ public class PlayerInteract : MonoBehaviour
             Debug.DrawRay(cam.transform.position, cam.transform.forward * distance, Color.white, 1f);
 
             if(Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, distance)){
-                print("hit!");
-                AirLock door = hit.collider.GetComponentInParent<AirLock>();
                 PlayerMovement movement = GetComponent<PlayerMovement>();
-                if(door != null && movement != null){
-                    door.Interact(movement);
+
+                IPlayerInteractable interactable = hit.collider.GetComponentInParent<IPlayerInteractable>();
+                if(interactable != null && movement != null){
+                    interactable.Interact(movement);
                 }
             }
         }

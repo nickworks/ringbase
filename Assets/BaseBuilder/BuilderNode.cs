@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BuilderNode : MonoBehaviour, IPlayerInteractable
 {
+    public float meters_in_front_of_player = 15;
     private Structure selectedStructure = null;
     private PreviewStructure preview = null;
     private Structure structure1 = null;
@@ -164,29 +165,37 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
         if(prefab == null) return;
         if(preview != null) Destroy(preview.gameObject);
         
-        preview = prefab.MakePreview(transform, buildDirection);
+        preview = prefab.MakePreview(this, buildDirection);
         RotatePreview();
+    }
+
+    Vector3 lookNode;
+    void OnDrawGizmos(){
+        Gizmos.DrawWireSphere(lookNode, .1f);
     }
     private void RotatePreview(){
         // rotate the preview so that
         if(preview == null) return;
 
-        float meters_in_front_of_player = 5;
-        Vector3 pos = player.transform.position + player.transform.forward * meters_in_front_of_player;
+        Vector3 pos = player.cam.transform.position + player.cam.transform.forward * meters_in_front_of_player;
 
+        lookNode = pos;
         Vector3 dir_to_pos = pos - transform.position;
 
         // calc rotation
-        Quaternion targetRot = startingRotation;
+        Matrix4x4 xform = transform.parent ? transform.parent.localToWorldMatrix : Matrix4x4.identity;
+
+        Quaternion targetRot = Quaternion.FromToRotation(xform * Vector3.up, dir_to_pos);
+
         if(buildDirection == BuildDirection.Vertical){
-            targetRot = Quaternion.FromToRotation(Vector3.up, dir_to_pos);
         }
         if(buildDirection == BuildDirection.Lateral){    
             //targetRot = Quaternion.LookRotation(dir_to_pos, transform.up);
-            targetRot = Quaternion.FromToRotation(Vector3.forward, dir_to_pos);
+            //targetRot = Quaternion.FromToRotation(Vector3.forward, dir_to_pos);
+            //targetRot = Quaternion.FromToRotation(startingRotation * Vector3.forward, dir_to_pos);
         }
-        // limit rotation
-        Quaternion finalRot = Quaternion.RotateTowards(startingRotation, targetRot, 20);
+        //Quaternion targetRot = Quaternion.FromToRotation(startingUp, dir_to_pos);
+        Quaternion finalRot = Quaternion.RotateTowards(startingRotation, targetRot, 40);
         transform.rotation = finalRot;
 
         DoCollisionCheck();

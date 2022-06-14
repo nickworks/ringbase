@@ -9,7 +9,10 @@ public class PlayerInteract : MonoBehaviour
 
     Modal currentGUI = null;
 
-    Camera cam;
+    public Camera cam {
+        get;
+        private set;
+    }
     void Start()
     {
         cam = GetComponentInChildren<Camera>();

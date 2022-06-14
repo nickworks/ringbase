@@ -63,7 +63,7 @@ public class RectRoom : Structure
          wallBack.localScale = new Vector3(sizeX, sizeY, wallThicc);
         wallFront.localScale = wallBack.localScale;
     }
-    public override PreviewStructure MakePreview(Transform parent, BuilderNode.BuildDirection buildDirection)
+    public override PreviewStructure MakePreview(BuilderNode parent, BuilderNode.BuildDirection buildDirection)
     {
         PreviewStructure preview = base.MakePreview(parent, buildDirection);
         preview.transform.localScale = new Vector3(

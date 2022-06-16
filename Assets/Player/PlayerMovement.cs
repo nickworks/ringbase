@@ -25,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
     Vector3 velocity = Vector3.zero;
 
+    // this is used to turn off player controls when showing modal GUI
     public bool shouldIgnoreInput = false;
 
     public class States {
@@ -107,14 +108,16 @@ public class PlayerMovement : MonoBehaviour
 
         //CalcVelocity();
         if(state == null) SwitchState(new States.ZeroG());
+
         state.Look();
         state.UpdateVelocity();
-
+        /*
         if(!shouldIgnoreInput && Input.GetButtonDown("Gravity")) {
             gravityIsOn = !gravityIsOn;
             print($"gravity {(gravityIsOn?"on":"off")}");
             SwitchState(gravityIsOn ? new States.Gravity() : new States.ZeroG());
         }
+        */
     }
     void FixedUpdate(){
         playerIsGrounded = false;
@@ -150,10 +153,12 @@ public class PlayerMovement : MonoBehaviour
         float y = Input.GetAxisRaw("Mouse X") * lookSensitivity.x;
         float x = Input.GetAxisRaw("Mouse Y") * lookSensitivity.y;
         float z = Input.GetAxisRaw("LookRoll") * lookSensitivity.z;
+        if(Input.GetButton("Fire2")) z = 0;
         return new Vector3(x, y, z);
     }
     private Vector3 GetMoveInput(bool allDirections = true){
         if(shouldIgnoreInput) return Vector3.zero;
+        if(Input.GetButton("Fire2")) return Vector3.zero;
         float z = Input.GetAxisRaw("MoveForward");
         float x = Input.GetAxisRaw("MoveRight");
         float y = Input.GetAxisRaw("MoveUp");

@@ -16,6 +16,14 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
     }
     public bool OnlyAvailableAsARoot = false;
 
+    public float rotateSpeed = 45;
+    private float roll = 0;
+    private float yaw = 0;
+    private float pitch = 0;
+    private float limitYaw = 90;
+    private float limitPitch = 30;
+    private float limitRoll = 30;
+
     class States {
         public abstract class State {
             protected BuilderNode node;
@@ -127,7 +135,7 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
     Quaternion startingRotation;
 
     void Start(){
-        startingRotation = transform.rotation;
+        startingRotation = transform.localRotation;
         if(OnlyAvailableAsARoot) Destroy(gameObject);
     }
     private void SwitchState(States.State nextState){
@@ -173,32 +181,29 @@ public class BuilderNode : MonoBehaviour, IPlayerInteractable
     void OnDrawGizmos(){
         Gizmos.DrawWireSphere(lookNode, .1f);
     }
-    private void RotatePreview(){
+    private void RotatePreview(bool forceCollisionCheck = true){
         // rotate the preview so that
         if(preview == null) return;
 
-        Vector3 pos = player.cam.transform.position + player.cam.transform.forward * meters_in_front_of_player;
+        if(Input.GetButton("Fire2")){
+            forceCollisionCheck = true;
+            if(buildDirection == BuildDirection.Vertical){
+                
+            }
+            if(buildDirection == BuildDirection.Lateral){    
+            }
+            yaw += Input.GetAxisRaw("LookRoll") * rotateSpeed * Time.deltaTime;
+            pitch += Input.GetAxisRaw("MoveForward") * rotateSpeed * Time.deltaTime;
+            roll += Input.GetAxisRaw("MoveRight") * rotateSpeed * Time.deltaTime;
 
-        lookNode = pos;
-        Vector3 dir_to_pos = pos - transform.position;
+            pitch = Mathf.Clamp(pitch, -limitPitch, limitPitch);
+            yaw = Mathf.Clamp(yaw, -limitYaw, limitYaw);
+            roll = Mathf.Clamp(roll, -limitRoll, limitRoll);
 
-        // calc rotation
-        Matrix4x4 xform = transform.parent ? transform.parent.localToWorldMatrix : Matrix4x4.identity;
+            transform.localRotation = startingRotation * Quaternion.Euler(pitch, yaw, roll);
 
-        Quaternion targetRot = Quaternion.FromToRotation(xform * Vector3.up, dir_to_pos);
-
-        if(buildDirection == BuildDirection.Vertical){
         }
-        if(buildDirection == BuildDirection.Lateral){    
-            //targetRot = Quaternion.LookRotation(dir_to_pos, transform.up);
-            //targetRot = Quaternion.FromToRotation(Vector3.forward, dir_to_pos);
-            //targetRot = Quaternion.FromToRotation(startingRotation * Vector3.forward, dir_to_pos);
-        }
-        //Quaternion targetRot = Quaternion.FromToRotation(startingUp, dir_to_pos);
-        Quaternion finalRot = Quaternion.RotateTowards(startingRotation, targetRot, 40);
-        transform.rotation = finalRot;
-
-        DoCollisionCheck();
+        if(forceCollisionCheck) DoCollisionCheck();
     }
     private void DoCollisionCheck(){
         if(preview == null) return;

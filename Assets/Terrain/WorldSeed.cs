@@ -35,6 +35,7 @@ public class WorldSeed : MonoBehaviour
             this.y = y;
             this.z = z;
         }
+        /// returns the world space position of the corner of the box
         public Vector3 position {
             get {
                 WorldSeed seed = WorldSeed.singleton;
@@ -100,12 +101,12 @@ public class WorldSeed : MonoBehaviour
         _previousPlayerPosition = Index3D.From(player ? player.transform.position : Vector3.zero);   
     }
     class BuildQueue {
-        List<ProceduralTerrain> queue = new List<ProceduralTerrain>();
+        List<KeyValuePair<float,ProceduralTerrain>> queue = new List<KeyValuePair<float,ProceduralTerrain>>();
         public BuildQueue(){
 
         }
-        public void Add(ProceduralTerrain chunk){
-            queue.Add(chunk);
+        public void Add(ProceduralTerrain chunk, float priority){
+            queue.Add(new KeyValuePair<float, ProceduralTerrain>(priority, chunk));
         }
         CancellationTokenSource cancellationTokenSource;
         public void BeginQueue(){
@@ -121,11 +122,25 @@ public class WorldSeed : MonoBehaviour
         }
         private async Task ProcessQueue(CancellationToken cancellationToken){
             while(true){
+                //print("queue running");
                 if (queue.Count > 1){
-                    Task t = queue[0].MarchGeometryAsync();
-                    queue.RemoveAt(0);
+
+                    float threshold = float.MaxValue;
+                    int index = 0;
+                    for(int i = 0; i < queue.Count; i++){
+                        if(queue[i].Key < threshold) {
+                            threshold = queue[i].Key;
+                            index = i;
+                        }
+                    }
+                    //print($"about to march queue#{index} a chunk with priority of {queue[index].Value}");
+                    // CANNOT await this next step, the queue may change
+                    Task t = queue[index].Value.MarchGeometryAsync();
+                    queue.RemoveAt(index);
+                } else {
+                    //print("queue.Count is ZERO");
                 }
-                await Task.Delay(10);
+                await Task.Yield();
                 if (cancellationToken.IsCancellationRequested) break;
             }
         }
@@ -142,29 +157,45 @@ public class WorldSeed : MonoBehaviour
     }
     public void LoadRegionsAroundPlayer(bool ignorePreviousPosition = false){
 
-        if(player == null) return;
+        if(player == null) {
+            print("there is no player...");
+            return;
+        }
 
         // get player position:
-        Index3D p = Index3D.From(player.transform.position);
+        Index3D pos3D = Index3D.From(player.transform.position);
 
         // if in same spot as last frame, do nothing
-        if(p == _previousPlayerPosition && ignorePreviousPosition == false) return;
+        if(pos3D == _previousPlayerPosition && ignorePreviousPosition == false) return;
+        print("player has entered new region");
 
-        _previousPlayerPosition = p;
+        _previousPlayerPosition = pos3D;
 
         // begin queue if it's not already running
         queue.BeginQueue();
 
         int d = viewDistance;
+
         for(int x = -d; x <= d; x++){
             for(int y = -d; y <= d; y++){
                 for(int z = -d; z <= d; z++){
-                    LaunchChunk(p + new Index3D(x, y, z));
+                    Index3D offset = new Index3D(x, y, z); 
+                    Vector3 vectorToPlayer = (pos3D + offset).position - player.transform.position;
+
+                    float distance_to_player = vectorToPlayer.magnitude;
+
+                    // 0 if behind the player
+                    // 1 if in front of the player
+                    float align_with_players_view = (Vector3.Dot(player.cam.transform.forward, vectorToPlayer) + 1)/2;
+
+                    float delay = distance_to_player + (1 - align_with_players_view);
+
+                    LaunchChunkWithDelay(pos3D + offset, delay);
                 }   
             }   
         }
     }
-    public void LaunchChunk(Index3D p){
+    public void LaunchChunkWithDelay(Index3D p, float delay){
         if(chunks.ContainsKey(p)) {
             //print("chunk already exists...");
             return;
@@ -174,10 +205,10 @@ public class WorldSeed : MonoBehaviour
             return;
         }
 
-        //print("launching chunk...");
+        print("launching chunk...");
         ProceduralTerrain chunk = Instantiate(prefabChunk, p.position, Quaternion.identity);
         chunks.Add(p, chunk);
-        queue.Add(chunk);
+        queue.Add(chunk, delay);
     }
     public void BuildWorld(){
         if(!Application.isPlaying) return;
@@ -281,7 +312,6 @@ public class WorldSeed : MonoBehaviour
             // adjust the final density using the densityBias:
             val *= field.outputMultiplier;
             val += field.densityBias;
-
 
             // adjust how various fields are mixed together:
             switch (field.type)

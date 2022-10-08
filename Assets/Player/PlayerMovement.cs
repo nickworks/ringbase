@@ -14,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private float pitch = 0;
     private float roll = 0;
     private Rigidbody body;
-    private Camera cam;
+    public Camera cam { get; private set; }
 
     public bool gravityIsOn = false;
     public bool playerIsGrounded = false;
@@ -110,7 +110,6 @@ public class PlayerMovement : MonoBehaviour
         if(state == null) SwitchState(new States.ZeroG());
 
         state.Look();
-        state.UpdateVelocity();
         /*
         if(!shouldIgnoreInput && Input.GetButtonDown("Gravity")) {
             gravityIsOn = !gravityIsOn;
@@ -120,6 +119,7 @@ public class PlayerMovement : MonoBehaviour
         */
     }
     void FixedUpdate(){
+        if(state != null) state.UpdateVelocity();
         playerIsGrounded = false;
     }
     private void SwitchState(States.State state){
@@ -129,7 +129,6 @@ public class PlayerMovement : MonoBehaviour
         this.state.OnBegin(this);
     }
     public void GravityOn(Vector3 dir){
-        gravityAmount = 1;
         gravityDirection = dir;
         gravityIsOn = true;
         SwitchState(new States.Gravity());

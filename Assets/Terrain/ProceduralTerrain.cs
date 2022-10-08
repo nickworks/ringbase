@@ -11,6 +11,7 @@ public class ProceduralTerrain : MonoBehaviour
     float[,,] densities = null;
     private MeshFilter meshFilter;
     private MeshCollider meshCollider;
+    bool showEdges = false;
 
     void Start()
     {
@@ -39,6 +40,7 @@ public class ProceduralTerrain : MonoBehaviour
         if(meshCollider != null) meshCollider.sharedMesh = mesh;
     }
     void OnDrawGizmos(){
+        if(showEdges == false) return; // do nothing...
         Vector3 size = Vector3.one * WorldSeed.singleton.terrainSize * WorldSeed.singleton.voxelSize;
         Gizmos.DrawWireCube(transform.position + size/2, size);
     }
